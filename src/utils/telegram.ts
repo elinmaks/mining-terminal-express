@@ -145,12 +145,14 @@ export const initTelegramWebApp = () => {
 };
 
 // Функции для работы с главной кнопкой
-export const showMainButton = (text: string = 'STOP MINING') => {
+export const showMainButton = (text: string = 'START MINING') => {
   if (!window.Telegram?.WebApp?.MainButton) return;
   
   try {
     const mainButton = window.Telegram.WebApp.MainButton;
     mainButton.setText(text);
+    mainButton.setBackgroundColor('#1a1b1e');
+    mainButton.setTextColor('#ffffff');
     mainButton.show();
     console.log('Показана главная кнопка с текстом:', text);
   } catch (error) {

@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import type { Block, TelegramUser, NetworkStats } from '@/types/mining';
@@ -10,6 +9,7 @@ import {
   MAIN_REWARD_SHARE,
   INITIAL_BLOCK 
 } from '@/constants/mining';
+import { haptic } from '@/utils/telegram';
 
 export const useMining = (user: TelegramUser | null) => {
   const [isMining, setIsMining] = useState(false);
@@ -153,6 +153,7 @@ export const useMining = (user: TelegramUser | null) => {
       }
       
       if (type === 'success') {
+        haptic.notification('success');
         const now = Date.now();
         const blockNum = lastBlockRef.current 
           ? (parseInt(lastBlockRef.current.number, 16) + 1).toString(16).padStart(5, '0')
