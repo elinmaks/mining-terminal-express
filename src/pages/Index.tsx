@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import MiningStats from '@/components/MiningStats';
@@ -7,7 +8,7 @@ import { getTelegramUser, initTelegramWebApp } from '@/utils/telegram';
 import type { Block, TelegramUser, NetworkStats } from '@/types/mining';
 
 // Константы
-const INITIAL_DIFFICULTY = 3;
+const INITIAL_DIFFICULTY = 5; // Изменено с 3 на 5
 const TARGET_BLOCK_TIME = 30; // 30 секунд
 const DIFFICULTY_ADJUSTMENT_BLOCKS = 10;
 const BASE_REWARD = 0.1;
