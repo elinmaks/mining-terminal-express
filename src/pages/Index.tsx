@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { Grid, Database, ListTodo, ArrowUp } from 'lucide-react';
 import MiningStats from '@/components/MiningStats';
@@ -29,7 +28,6 @@ const Index = () => {
     activeMiners
   } = useMining(user);
 
-  // Инициализация Telegram Web App
   useEffect(() => {
     initTelegramWebApp();
     const telegramUser = getTelegramUser();
@@ -111,7 +109,7 @@ const Index = () => {
       </div>
 
       {/* Основной контент */}
-      <div className="flex-1 overflow-y-auto pt-[72px]">
+      <div className="flex-1 overflow-y-auto pt-[72px] scroll-heavy">
         <div className="max-w-4xl mx-auto p-4">
           <MiningStats
             personalStats={{

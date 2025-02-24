@@ -26,18 +26,15 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-text-size-adjust: none;
   }
 
   ::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-background/50;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-border rounded-full;
+    display: none;
   }
 }
 
@@ -49,5 +46,11 @@
   .terminal-text {
     font-family: 'JetBrains Mono', monospace;
     @apply text-[13px] leading-relaxed tracking-tight;
+  }
+
+  .scroll-heavy {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: y proximity;
   }
 }

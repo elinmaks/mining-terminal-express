@@ -156,7 +156,7 @@ export const useMining = (user: TelegramUser | null) => {
         haptic.notification('success');
         const now = Date.now();
         const blockNum = lastBlockRef.current 
-          ? (parseInt(lastBlockRef.current.number, 16) + 1).toString(16).padStart(5, '0')
+          ? getNextBlockNumber(lastBlockRef.current.number)
           : INITIAL_BLOCK;
 
         const newBlock: Block = {
