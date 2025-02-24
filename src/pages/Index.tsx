@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import MiningStats from '@/components/MiningStats';
@@ -112,10 +111,6 @@ const Index = () => {
           ...prev,
           shares: prev.shares + 1
         }));
-        toast({
-          title: "Share найден!",
-          description: `Hash: ${hash.substring(0, 20)}...`,
-        });
       }
       
       if (type === 'success') {

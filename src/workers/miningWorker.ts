@@ -2,6 +2,7 @@
 // Константы
 const SHARE_DIFFICULTY_DELTA = 2; // На сколько меньше сложность для шар
 const BATCH_SIZE = 1000; // Количество попыток перед отправкой обновления
+const SPEED_LIMIT = 0.35; // Ограничение скорости до 35%
 
 // Функция для вычисления SHA-256
 async function sha256(message: string): Promise<string> {
@@ -20,6 +21,11 @@ function meetsTarget(hash: string, difficulty: number): boolean {
 // Функция проверки share
 function isShare(hash: string, blockDifficulty: number): boolean {
   return meetsTarget(hash, Math.max(1, blockDifficulty - SHARE_DIFFICULTY_DELTA));
+}
+
+// Функция задержки для ограничения скорости
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // Основной процесс майнинга
@@ -46,7 +52,7 @@ async function mine(data: string, difficulty: number): Promise<void> {
         return;
       }
       
-      // Проверка на share
+      // Проверка на share (без отправки уведомления)
       if (isShare(hash, difficulty)) {
         self.postMessage({
           type: 'share',
@@ -68,6 +74,12 @@ async function mine(data: string, difficulty: number): Promise<void> {
       hashrate: currentHashrate,
       totalHashrate: calculateHashrate(hashCount, startTime)
     });
+
+    // Добавляем задержку для ограничения скорости
+    const elapsedTime = Date.now() - batchStartTime;
+    const targetTime = (BATCH_SIZE / currentHashrate) * (1 / SPEED_LIMIT) * 1000;
+    const delayTime = Math.max(0, targetTime - elapsedTime);
+    await sleep(delayTime);
   }
 }
 
