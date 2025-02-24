@@ -8,16 +8,18 @@ import {
   initTelegramWebApp, 
   showMainButton, 
   hideMainButton,
-  setMainButtonHandler 
+  setMainButtonHandler,
+  disableClosingBehaviour
 } from '@/utils/telegram';
 import type { Block, TelegramUser, NetworkStats } from '@/types/mining';
 
 // Константы
-const INITIAL_DIFFICULTY = 5; // Изменено с 3 на 5
-const TARGET_BLOCK_TIME = 30; // 30 секунд
+const INITIAL_DIFFICULTY = 5;
+const TARGET_BLOCK_TIME = 30;
 const DIFFICULTY_ADJUSTMENT_BLOCKS = 10;
 const BASE_REWARD = 0.1;
-const MAIN_REWARD_SHARE = 0.7; // 70% основному майнеру
+const MAIN_REWARD_SHARE = 0.7;
+const INITIAL_BLOCK = '00001';
 
 const Index = () => {
   const [isMining, setIsMining] = useState(false);
@@ -26,6 +28,7 @@ const Index = () => {
   const [currentHashrate, setCurrentHashrate] = useState(0);
   const workerRef = useRef<Worker | null>(null);
   const [user, setUser] = useState<TelegramUser | null>(null);
+  const [activeMiners, setActiveMiners] = useState<Set<string>>(new Set());
   
   const [stats, setStats] = useState({
     balance: 0,
@@ -36,7 +39,7 @@ const Index = () => {
 
   const [networkStats, setNetworkStats] = useState<NetworkStats>({
     totalHashrate: 0,
-    activeMiners: 3,
+    activeMiners: 1,
     currentDifficulty: INITIAL_DIFFICULTY,
     targetBlockTime: TARGET_BLOCK_TIME,
     averageBlockTime: TARGET_BLOCK_TIME
@@ -48,14 +51,41 @@ const Index = () => {
   // Инициализация Telegram Web App
   useEffect(() => {
     initTelegramWebApp();
+    disableClosingBehaviour();
     const telegramUser = getTelegramUser();
     if (telegramUser && telegramUser.username) {
       setUser({ 
         ...telegramUser,
         username: telegramUser.username
       });
+      setActiveMiners(prev => new Set(prev).add(telegramUser.username!));
     }
   }, []);
+
+  // Обновление активных майнеров
+  useEffect(() => {
+    const updateInterval = setInterval(() => {
+      const now = Date.now();
+      setActiveMiners(prev => {
+        const active = new Set(prev);
+        Array.from(active).forEach(miner => {
+          const lastBlock = blocks.find(b => b.miner.username === miner);
+          if (lastBlock && now - lastBlock.timestamp > 5 * 60 * 1000) {
+            active.delete(miner);
+          }
+        });
+        return active;
+      });
+
+      setNetworkStats(prev => ({
+        ...prev,
+        activeMiners: activeMiners.size,
+        totalHashrate: stats.hashrate * activeMiners.size
+      }));
+    }, 30000);
+
+    return () => clearInterval(updateInterval);
+  }, [activeMiners, blocks, stats.hashrate]);
 
   // Управление главной кнопкой Telegram
   useEffect(() => {
@@ -81,7 +111,6 @@ const Index = () => {
     const timeRatio = TARGET_BLOCK_TIME / averageTime;
     let newDifficulty = networkStats.currentDifficulty * timeRatio;
 
-    // Ограничиваем изменение сложности
     newDifficulty = Math.max(1, Math.min(newDifficulty, networkStats.currentDifficulty * 2));
 
     return Math.round(newDifficulty);
@@ -92,7 +121,6 @@ const Index = () => {
     setBlocks(prev => {
       const newBlocks = [block, ...prev].slice(0, 50);
       
-      // Обновляем сложность каждые DIFFICULTY_ADJUSTMENT_BLOCKS блоков
       if (newBlocks.length % DIFFICULTY_ADJUSTMENT_BLOCKS === 0) {
         const newDifficulty = calculateNewDifficulty(newBlocks);
         setNetworkStats(prev => ({
@@ -103,6 +131,10 @@ const Index = () => {
       
       return newBlocks;
     });
+
+    if (block.miner.username) {
+      setActiveMiners(prev => new Set(prev).add(block.miner.username));
+    }
   }, [calculateNewDifficulty]);
 
   // Инициализация Web Worker
@@ -135,8 +167,8 @@ const Index = () => {
       if (type === 'success') {
         const now = Date.now();
         const blockNum = lastBlockRef.current 
-          ? (parseInt(lastBlockRef.current.number, 16) + 1).toString(16).padStart(8, '0')
-          : (0x1000000).toString(16);
+          ? (parseInt(lastBlockRef.current.number, 16) + 1).toString(16).padStart(5, '0')
+          : INITIAL_BLOCK;
 
         const newBlock: Block = {
           number: blockNum,

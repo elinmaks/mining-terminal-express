@@ -191,3 +191,19 @@ export const haptic = {
     window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
   }
 };
+
+export const disableClosingBehaviour = () => {
+  if (!window.Telegram?.WebApp) return;
+  
+  try {
+    // Отключаем стандартное поведение при свайпе вниз
+    document.body.style.overscrollBehavior = 'none';
+    
+    // Отключаем закрытие через свайп
+    window.Telegram.WebApp.disableClosingConfirmation();
+    
+    console.log('Отключено сворачивание приложения свайпом');
+  } catch (error) {
+    console.error('Ошибка при отключении сворачивания:', error);
+  }
+};
