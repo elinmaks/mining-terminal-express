@@ -1,5 +1,5 @@
 
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { haptic } from '@/utils/telegram';
 import type { Block } from '@/types/mining';

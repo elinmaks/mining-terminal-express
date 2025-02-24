@@ -49,8 +49,11 @@ const Index = () => {
   useEffect(() => {
     initTelegramWebApp();
     const telegramUser = getTelegramUser();
-    if (telegramUser) {
-      setUser(telegramUser);
+    if (telegramUser && telegramUser.username) {
+      setUser({ 
+        ...telegramUser,
+        username: telegramUser.username
+      });
     }
   }, []);
 
@@ -241,6 +244,7 @@ const Index = () => {
             difficulty: networkStats.currentDifficulty,
             currentBlock: parseInt(lastBlockRef.current?.number || '1000000', 16)
           }}
+          user={user}
         />
 
         <MiningOutput
