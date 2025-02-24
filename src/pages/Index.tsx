@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import MiningStats from '@/components/MiningStats';
@@ -15,7 +14,7 @@ const BASE_REWARD = 0.1;
 const MAIN_REWARD_SHARE = 0.7; // 70% основному майнеру
 
 const Index = () => {
-  const [isMining, setIsMining] = useState(true);
+  const [isMining, setIsMining] = useState(false);
   const [currentHash, setCurrentHash] = useState('');
   const [currentNonce, setCurrentNonce] = useState('0');
   const [currentHashrate, setCurrentHashrate] = useState(0);
@@ -149,7 +148,7 @@ const Index = () => {
         setStats(prev => ({
           ...prev,
           balance: prev.balance + newBlock.miner.reward,
-          shares: 0 // Сбрасываем счетчик шар
+          shares: 0
         }));
 
         toast({
@@ -158,18 +157,26 @@ const Index = () => {
           variant: "default",
         });
 
-        // Начинаем майнить следующий блок
-        startMining();
+        if (isMining) {
+          startMining();
+        }
       }
     };
 
     return () => {
-      workerRef.current?.terminate();
+      if (workerRef.current) {
+        workerRef.current.terminate();
+        workerRef.current = null;
+      }
     };
-  }, [networkStats.currentDifficulty, user, handleNewBlock]);
+  }, [networkStats.currentDifficulty, user, handleNewBlock, isMining]);
 
   const startMining = useCallback(() => {
-    if (!workerRef.current) return;
+    if (!workerRef.current) {
+      workerRef.current = new Worker(new URL('../workers/miningWorker.ts', import.meta.url), {
+        type: 'module'
+      });
+    }
     
     const data = lastBlockRef.current 
       ? `${lastBlockRef.current.hash}${lastBlockRef.current.number}`
@@ -182,11 +189,23 @@ const Index = () => {
     });
   }, [networkStats.currentDifficulty]);
 
+  const stopMining = useCallback(() => {
+    if (workerRef.current) {
+      workerRef.current.terminate();
+      workerRef.current = null;
+      setCurrentHash('');
+      setCurrentNonce('0');
+      setCurrentHashrate(0);
+    }
+  }, []);
+
   useEffect(() => {
     if (isMining) {
       startMining();
+    } else {
+      stopMining();
     }
-  }, [isMining, startMining]);
+  }, [isMining, startMining, stopMining]);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
