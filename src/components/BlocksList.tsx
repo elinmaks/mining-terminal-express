@@ -1,27 +1,38 @@
+
 import { memo, useState } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { haptic } from '@/utils/telegram';
 import type { Block } from '@/types/mining';
+
 interface BlocksListProps {
   blocks: Block[];
 }
+
 const BlocksList = memo(({
   blocks
 }: BlocksListProps) => {
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
+
   const handleBlockClick = (block: Block) => {
     haptic.impact('medium');
     setSelectedBlock(block);
   };
+
   return <>
       <div className="glass-panel p-4 rounded-lg h-[200px] overflow-y-auto terminal-text bg-zinc-950">
         <div className="mb-2">Found Blocks:</div>
-        {blocks.map((block, index) => <div key={index} className="text-terminal-text mb-1 cursor-pointer hover:bg-white/5 p-2 rounded transition-colors" onClick={() => handleBlockClick(block)}>
+        {blocks.map((block) => (
+          <div 
+            key={block.id} 
+            className="text-terminal-text mb-1 cursor-pointer hover:bg-white/5 p-2 rounded transition-colors" 
+            onClick={() => handleBlockClick(block)}
+          >
             <span className="text-terminal-nonce">#{block.number}</span>{' '}
             <span className="text-terminal-hash">{block.hash.substring(0, 32)}...</span>{' '}
-            <span className="text-terminal-rate">+{block.miner.reward} ({block.miner.username})</span>{' '}
-            <span className="opacity-50">{block.time}</span>
-          </div>)}
+            <span className="text-terminal-rate">+{block.reward.toFixed(8)} ({block.miner.username})</span>{' '}
+            <span className="opacity-50">{new Date(block.timestamp).toLocaleTimeString()}</span>
+          </div>
+        ))}
       </div>
 
       <Dialog open={!!selectedBlock} onOpenChange={() => setSelectedBlock(null)}>
@@ -32,10 +43,10 @@ const BlocksList = memo(({
                 <p>Number: <span className="text-terminal-nonce">#{selectedBlock.number}</span></p>
                 <p>Hash: <span className="text-terminal-hash break-all">{selectedBlock.hash}</span></p>
                 <p>Previous Hash: <span className="text-terminal-hash break-all">{selectedBlock.previousHash}</span></p>
-                <p>Time: <span>{selectedBlock.time}</span></p>
+                <p>Time: <span>{new Date(selectedBlock.timestamp).toLocaleTimeString()}</span></p>
                 <p>Difficulty: <span className="text-terminal-nonce">{selectedBlock.difficulty}</span></p>
                 <p>Miner: <span className="text-terminal-rate">{selectedBlock.miner.username}</span></p>
-                <p>Reward: <span className="text-terminal-rate">{selectedBlock.miner.reward}</span></p>
+                <p>Reward: <span className="text-terminal-rate">{selectedBlock.reward.toFixed(8)}</span></p>
                 <p>Total Shares: <span>{selectedBlock.totalShares}</span></p>
               </div>
             </div>}
@@ -43,5 +54,6 @@ const BlocksList = memo(({
       </Dialog>
     </>;
 });
+
 BlocksList.displayName = 'BlocksList';
 export default BlocksList;

@@ -9,28 +9,28 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      balance: {
+      balances: {
         Row: {
-          amount: number | null
+          amount: number
           id: string
           profile_id: string
           updated_at: string | null
         }
         Insert: {
-          amount?: number | null
+          amount?: number
           id?: string
           profile_id: string
           updated_at?: string | null
         }
         Update: {
-          amount?: number | null
+          amount?: number
           id?: string
           profile_id?: string
           updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "balance_profile_id_fkey"
+            foreignKeyName: "balances_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: true
             referencedRelation: "profiles"
@@ -40,37 +40,40 @@ export type Database = {
       }
       blocks: {
         Row: {
-          block_number: number
           created_at: string | null
-          difficulty: number | null
+          difficulty: number
           hash: string
           id: string
           miner_profile_id: string | null
-          reward: number | null
-          size: number | null
-          transactions: number | null
+          number: string
+          previous_hash: string
+          reward: number
+          timestamp: number
+          total_shares: number
         }
         Insert: {
-          block_number: number
           created_at?: string | null
-          difficulty?: number | null
+          difficulty: number
           hash: string
           id?: string
           miner_profile_id?: string | null
-          reward?: number | null
-          size?: number | null
-          transactions?: number | null
+          number: string
+          previous_hash: string
+          reward?: number
+          timestamp: number
+          total_shares?: number
         }
         Update: {
-          block_number?: number
           created_at?: string | null
-          difficulty?: number | null
+          difficulty?: number
           hash?: string
           id?: string
           miner_profile_id?: string | null
-          reward?: number | null
-          size?: number | null
-          transactions?: number | null
+          number?: string
+          previous_hash?: string
+          reward?: number
+          timestamp?: number
+          total_shares?: number
         }
         Relationships: [
           {
@@ -82,109 +85,42 @@ export type Database = {
           },
         ]
       }
-      energy: {
+      miner_stats: {
         Row: {
-          current_energy: number
+          best_hashrate: number | null
           id: string
-          last_update: string | null
-          max_energy: number
+          last_share_at: string | null
           profile_id: string
-          recovery_rate: number
+          total_blocks_mined: number
+          total_reward: number
+          total_shares: number
+          updated_at: string | null
         }
         Insert: {
-          current_energy?: number
+          best_hashrate?: number | null
           id?: string
-          last_update?: string | null
-          max_energy?: number
+          last_share_at?: string | null
           profile_id: string
-          recovery_rate?: number
+          total_blocks_mined?: number
+          total_reward?: number
+          total_shares?: number
+          updated_at?: string | null
         }
         Update: {
-          current_energy?: number
+          best_hashrate?: number | null
           id?: string
-          last_update?: string | null
-          max_energy?: number
+          last_share_at?: string | null
           profile_id?: string
-          recovery_rate?: number
+          total_blocks_mined?: number
+          total_reward?: number
+          total_shares?: number
+          updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "energy_profile_id_fkey"
+            foreignKeyName: "miner_stats_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      mining_history: {
-        Row: {
-          action_type: string
-          amount: number | null
-          created_at: string | null
-          description: string | null
-          id: string
-          profile_id: string
-        }
-        Insert: {
-          action_type: string
-          amount?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          profile_id: string
-        }
-        Update: {
-          action_type?: string
-          amount?: number | null
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          profile_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "mining_history_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      mining_sessions: {
-        Row: {
-          average_hashrate: number | null
-          created_at: string | null
-          end_time: string | null
-          id: string
-          profile_id: string
-          start_time: string
-          total_hashes: number | null
-        }
-        Insert: {
-          average_hashrate?: number | null
-          created_at?: string | null
-          end_time?: string | null
-          id?: string
-          profile_id: string
-          start_time?: string
-          total_hashes?: number | null
-        }
-        Update: {
-          average_hashrate?: number | null
-          created_at?: string | null
-          end_time?: string | null
-          id?: string
-          profile_id?: string
-          start_time?: string
-          total_hashes?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "mining_sessions_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -255,108 +191,6 @@ export type Database = {
           },
           {
             foreignKeyName: "shares_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      stars: {
-        Row: {
-          amount: number
-          id: string
-          profile_id: string
-          updated_at: string | null
-        }
-        Insert: {
-          amount?: number
-          id?: string
-          profile_id: string
-          updated_at?: string | null
-        }
-        Update: {
-          amount?: number
-          id?: string
-          profile_id?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stars_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: true
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      stars_history: {
-        Row: {
-          amount: number
-          created_at: string | null
-          description: string | null
-          id: string
-          operation_type: string
-          profile_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          operation_type: string
-          profile_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          operation_type?: string
-          profile_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stars_history_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      top_miners: {
-        Row: {
-          best_hashrate: number | null
-          id: string
-          profile_id: string | null
-          rank: number | null
-          total_blocks_mined: number | null
-          total_reward: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          best_hashrate?: number | null
-          id?: string
-          profile_id?: string | null
-          rank?: number | null
-          total_blocks_mined?: number | null
-          total_reward?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          best_hashrate?: number | null
-          id?: string
-          profile_id?: string | null
-          rank?: number | null
-          total_blocks_mined?: number | null
-          total_reward?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "top_miners_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
