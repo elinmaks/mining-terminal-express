@@ -3,7 +3,13 @@ import { toast } from '@/components/ui/use-toast';
 import MiningStats from '@/components/MiningStats';
 import MiningOutput from '@/components/MiningOutput';
 import BlocksList from '@/components/BlocksList';
-import { getTelegramUser, initTelegramWebApp } from '@/utils/telegram';
+import { 
+  getTelegramUser, 
+  initTelegramWebApp, 
+  showMainButton, 
+  hideMainButton,
+  setMainButtonHandler 
+} from '@/utils/telegram';
 import type { Block, TelegramUser, NetworkStats } from '@/types/mining';
 
 // Константы
@@ -47,6 +53,16 @@ const Index = () => {
       setUser(telegramUser);
     }
   }, []);
+
+  // Управление главной кнопкой Telegram
+  useEffect(() => {
+    if (isMining) {
+      showMainButton('STOP MINING');
+      setMainButtonHandler(() => setIsMining(false));
+    } else {
+      hideMainButton();
+    }
+  }, [isMining]);
 
   // Расчет новой сложности
   const calculateNewDifficulty = useCallback((blocks: Block[]) => {
@@ -233,12 +249,14 @@ const Index = () => {
           hashrate={currentHashrate.toFixed(2)}
         />
 
-        <button
-          onClick={() => setIsMining(prev => !prev)}
-          className="w-full glass-panel p-3 rounded-lg mb-4 terminal-text text-terminal-nonce hover:bg-white/10 transition-colors"
-        >
-          {isMining ? 'STOP MINING' : 'START MINING'}
-        </button>
+        {!isMining && (
+          <button
+            onClick={() => setIsMining(true)}
+            className="w-full glass-panel p-3 rounded-lg mb-4 terminal-text text-terminal-nonce hover:bg-white/10 transition-colors"
+          >
+            START MINING
+          </button>
+        )}
 
         <BlocksList blocks={blocks} />
       </div>
