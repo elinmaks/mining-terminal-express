@@ -7,7 +7,8 @@ import {
   DIFFICULTY_ADJUSTMENT_BLOCKS,
   BASE_REWARD,
   MAIN_REWARD_SHARE,
-  INITIAL_BLOCK 
+  INITIAL_BLOCK,
+  getNextBlockNumber 
 } from '@/constants/mining';
 import { haptic } from '@/utils/telegram';
 
