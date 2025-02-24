@@ -1,11 +1,6 @@
 
 import { memo } from 'react';
-
-interface Block {
-  number: string;
-  hash: string;
-  time: string;
-}
+import type { Block } from '@/types/mining';
 
 interface BlocksListProps {
   blocks: Block[];
@@ -19,6 +14,7 @@ const BlocksList = memo(({ blocks }: BlocksListProps) => {
         <div key={index} className="text-terminal-text mb-1">
           <span className="text-terminal-nonce">#{block.number}</span>{' '}
           <span className="text-terminal-hash">{block.hash.substring(0, 32)}...</span>{' '}
+          <span className="text-terminal-rate">+{block.miner.reward} ({block.miner.username})</span>{' '}
           <span className="opacity-50">{block.time}</span>
         </div>
       ))}
