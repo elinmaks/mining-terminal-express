@@ -151,8 +151,8 @@ export const showMainButton = (text: string = 'START MINING') => {
   try {
     const mainButton = window.Telegram.WebApp.MainButton;
     mainButton.setText(text);
-    mainButton.setBackgroundColor('#1a1b1e');
-    mainButton.setTextColor('#ffffff');
+    mainButton.color = '#1a1b1e';
+    mainButton.textColor = '#ffffff';
     mainButton.show();
     console.log('Показана главная кнопка с текстом:', text);
   } catch (error) {
