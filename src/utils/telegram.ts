@@ -1,4 +1,3 @@
-
 // Определения типов для Telegram Web App
 interface ThemeParams {
   bg_color?: string;
@@ -51,6 +50,12 @@ interface BackButton {
   hide: () => void;
 }
 
+interface HapticFeedback {
+  impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
+  notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
+  selectionChanged: () => void;
+}
+
 declare global {
   interface Window {
     Telegram: {
@@ -66,6 +71,7 @@ declare global {
         viewportStableHeight: number;
         MainButton: MainButton;
         BackButton: BackButton;
+        HapticFeedback: HapticFeedback;
         ready: () => void;
         expand: () => void;
         close: () => void;
@@ -171,5 +177,17 @@ export const setMainButtonHandler = (callback: () => void) => {
     console.log('Установлен обработчик нажатия главной кнопки');
   } catch (error) {
     console.error('Ошибка при установке обработчика главной кнопки:', error);
+  }
+};
+
+export const haptic = {
+  impact: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => {
+    window.Telegram?.WebApp?.HapticFeedback?.impactOccurred(style);
+  },
+  notification: (type: 'error' | 'success' | 'warning') => {
+    window.Telegram?.WebApp?.HapticFeedback?.notificationOccurred(type);
+  },
+  selection: () => {
+    window.Telegram?.WebApp?.HapticFeedback?.selectionChanged();
   }
 };

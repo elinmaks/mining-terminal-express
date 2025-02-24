@@ -1,4 +1,3 @@
-
 export interface MinerShare {
   userId: string;
   username: string;
@@ -36,8 +35,11 @@ export interface MiningResult {
 
 export interface TelegramUser {
   id: number;
-  username: string;
   first_name: string;
+  last_name?: string;
+  username: string;
+  language_code?: string;
+  registered_at?: string; // Добавляем дату регистрации
 }
 
 export interface NetworkStats {
