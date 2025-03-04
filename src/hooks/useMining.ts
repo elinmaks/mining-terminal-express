@@ -1,107 +1,68 @@
 
-import { useState, useCallback, useEffect, useRef } from 'react';
-import { toast } from '@/components/ui/use-toast';
-import type { Block, TelegramUser, NetworkStats } from '@/types/mining';
-import { 
-  INITIAL_DIFFICULTY, 
-  TARGET_BLOCK_TIME, 
-  DIFFICULTY_ADJUSTMENT_BLOCKS,
-  BASE_REWARD,
-  MAIN_REWARD_SHARE,
-  INITIAL_BLOCK,
-  getNextBlockNumber 
-} from '@/constants/mining';
-import { haptic } from '@/utils/telegram';
+import { useState, useCallback, useEffect } from 'react';
+import type { Block, TelegramUser } from '@/types/mining';
+import { DIFFICULTY_ADJUSTMENT_BLOCKS } from '@/constants/mining';
+import { useBlocks } from './useBlocks';
+import { useMiningWorker } from './useMiningWorker';
+import { useNetworkStats } from './useNetworkStats';
+import { useMiningStats } from './useMiningStats';
 
 export const useMining = (user: TelegramUser | null) => {
   const [isMining, setIsMining] = useState(false);
-  const [currentHash, setCurrentHash] = useState('');
-  const [currentNonce, setCurrentNonce] = useState('0');
-  const [currentHashrate, setCurrentHashrate] = useState(0);
-  const workerRef = useRef<Worker | null>(null);
   const [activeMiners, setActiveMiners] = useState<Set<string>>(new Set());
   
-  const [stats, setStats] = useState({
-    balance: 0,
-    hashrate: 0,
-    shares: 0,
-    attempts: 0
+  // Инициализируем подхуки
+  const { stats, incrementShares, incrementAttempts, updateHashrate, addReward, resetShares } = useMiningStats();
+  
+  const { networkStats, updateDifficulty } = useNetworkStats({
+    activeMiners,
+    personalHashrate: stats.hashrate
+  });
+  
+  const { 
+    blocks, 
+    lastBlockRef, 
+    calculateNewDifficulty, 
+    createNewBlock 
+  } = useBlocks(networkStats.currentDifficulty);
+  
+  const { 
+    currentHash, 
+    currentNonce, 
+    currentHashrate 
+  } = useMiningWorker({
+    isMining,
+    difficulty: networkStats.currentDifficulty,
+    lastBlock: lastBlockRef.current,
+    onShare: incrementShares,
+    onMiningProgress: (data) => {
+      incrementAttempts(1000);
+      updateHashrate(data.totalHashrate);
+    },
+    onBlockFound: (data) => {
+      const block = createNewBlock({
+        hash: data.hash,
+        user,
+        currentDifficulty: networkStats.currentDifficulty,
+        shares: stats.shares,
+        hash64: '0'.repeat(64)
+      });
+      
+      addReward(block.miner.reward || 0);
+      resetShares();
+    }
   });
 
-  const [networkStats, setNetworkStats] = useState<NetworkStats>({
-    totalHashrate: 0,
-    activeMiners: 1,
-    currentDifficulty: INITIAL_DIFFICULTY,
-    targetBlockTime: TARGET_BLOCK_TIME
-  });
-
-  const [blocks, setBlocks] = useState<Block[]>([]);
-  const lastBlockRef = useRef<Block | null>(null);
-
-  const calculateNewDifficulty = useCallback((blocks: Block[]) => {
-    if (blocks.length < DIFFICULTY_ADJUSTMENT_BLOCKS) return networkStats.currentDifficulty;
-
-    const relevantBlocks = blocks.slice(0, DIFFICULTY_ADJUSTMENT_BLOCKS);
-    const averageTime = relevantBlocks.reduce((sum, block, index, arr) => {
-      if (index === 0) return sum;
-      const timeDiff = block.timestamp - arr[index - 1].timestamp;
-      return sum + timeDiff;
-    }, 0) / (DIFFICULTY_ADJUSTMENT_BLOCKS - 1);
-
-    const timeRatio = TARGET_BLOCK_TIME / averageTime;
-    let newDifficulty = networkStats.currentDifficulty * timeRatio;
-    newDifficulty = Math.max(1, Math.min(newDifficulty, networkStats.currentDifficulty * 2));
-
-    return Math.round(newDifficulty);
-  }, [networkStats.currentDifficulty]);
-
-  const handleNewBlock = useCallback((block: Block) => {
-    setBlocks(prev => {
-      const newBlocks = [block, ...prev].slice(0, 50);
-      
-      if (newBlocks.length % DIFFICULTY_ADJUSTMENT_BLOCKS === 0) {
-        const newDifficulty = calculateNewDifficulty(newBlocks);
-        setNetworkStats(prev => ({
-          ...prev,
-          currentDifficulty: newDifficulty
-        }));
-      }
-      
-      return newBlocks;
-    });
-
+  const handleBlockCreated = useCallback((block: Block) => {
     if (block.miner.username) {
       setActiveMiners(prev => new Set(prev).add(block.miner.username));
     }
-  }, [calculateNewDifficulty]);
-
-  const startMining = useCallback(() => {
-    if (!workerRef.current) {
-      workerRef.current = new Worker(new URL('../workers/miningWorker.ts', import.meta.url), {
-        type: 'module'
-      });
-    }
     
-    const data = lastBlockRef.current 
-      ? `${lastBlockRef.current.hash}${lastBlockRef.current.number}`
-      : '0'.repeat(64);
-
-    workerRef.current.postMessage({
-      type: 'start',
-      data,
-      difficulty: networkStats.currentDifficulty
-    });
-  }, [networkStats.currentDifficulty]);
-
-  const stopMining = useCallback(() => {
-    if (workerRef.current) {
-      workerRef.current.terminate();
-      workerRef.current = null;
-      setCurrentHash('');
-      setCurrentNonce('0');
-      setCurrentHashrate(0);
+    if (blocks.length % DIFFICULTY_ADJUSTMENT_BLOCKS === 0) {
+      const newDifficulty = calculateNewDifficulty(blocks);
+      updateDifficulty(newDifficulty);
     }
-  }, []);
+  }, [blocks, calculateNewDifficulty, updateDifficulty]);
 
   useEffect(() => {
     const updateInterval = setInterval(() => {
@@ -116,110 +77,16 @@ export const useMining = (user: TelegramUser | null) => {
         });
         return active;
       });
-
-      setNetworkStats(prev => ({
-        ...prev,
-        activeMiners: activeMiners.size,
-        totalHashrate: stats.hashrate * activeMiners.size
-      }));
     }, 30000);
 
     return () => clearInterval(updateInterval);
-  }, [activeMiners, blocks, stats.hashrate]);
+  }, [blocks]);
 
   useEffect(() => {
-    workerRef.current = new Worker(new URL('../workers/miningWorker.ts', import.meta.url), {
-      type: 'module'
-    });
-
-    workerRef.current.onmessage = (e) => {
-      const { type, nonce, hash, hashrate, totalHashrate } = e.data;
-      
-      if (type === 'progress') {
-        setCurrentHash(hash || '');
-        setCurrentNonce(nonce.toString());
-        setCurrentHashrate(hashrate);
-        setStats(prev => ({
-          ...prev,
-          attempts: prev.attempts + 1000,
-          hashrate: totalHashrate
-        }));
-      }
-      
-      if (type === 'share') {
-        setStats(prev => ({
-          ...prev,
-          shares: prev.shares + 1
-        }));
-      }
-      
-      if (type === 'success') {
-        haptic.notification('success');
-        const now = Date.now();
-        const blockNum = lastBlockRef.current 
-          ? getNextBlockNumber(lastBlockRef.current.number)
-          : INITIAL_BLOCK;
-
-        // Создаем блок с правильной структурой типов
-        const mainReward = BASE_REWARD * MAIN_REWARD_SHARE;
-        const newBlock: Block = {
-          id: crypto.randomUUID(),
-          number: blockNum,
-          hash,
-          previousHash: lastBlockRef.current?.hash || '0'.repeat(64),
-          timestamp: now,
-          difficulty: networkStats.currentDifficulty,
-          minerProfileId: user?.id.toString() || 'anonymous',
-          totalShares: stats.shares,
-          reward: BASE_REWARD,
-          miner: {
-            username: user?.username || 'anonymous',
-            reward: mainReward
-          },
-          time: new Date().toLocaleTimeString(),
-          shares: { [user?.id.toString() || 'anonymous']: stats.shares },
-          rewards: {
-            main: mainReward,
-            shares: BASE_REWARD * (1 - MAIN_REWARD_SHARE)
-          }
-        };
-
-        lastBlockRef.current = newBlock;
-        handleNewBlock(newBlock);
-
-        setStats(prev => ({
-          ...prev,
-          balance: prev.balance + (newBlock.miner.reward || 0),
-          shares: 0
-        }));
-
-        toast({
-          title: "Блок найден!",
-          description: `Награда: ${(newBlock.miner.reward || 0).toFixed(8)}`,
-          variant: "default",
-        });
-
-        if (isMining) {
-          startMining();
-        }
-      }
-    };
-
-    return () => {
-      if (workerRef.current) {
-        workerRef.current.terminate();
-        workerRef.current = null;
-      }
-    };
-  }, [networkStats.currentDifficulty, user, handleNewBlock, isMining]);
-
-  useEffect(() => {
-    if (isMining) {
-      startMining();
-    } else {
-      stopMining();
+    if (blocks.length > 0) {
+      handleBlockCreated(blocks[0]);
     }
-  }, [isMining, startMining, stopMining]);
+  }, [blocks, handleBlockCreated]);
 
   return {
     isMining,
