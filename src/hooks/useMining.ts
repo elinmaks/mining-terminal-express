@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { toast } from '@/components/ui/use-toast';
 import type { Block, TelegramUser, NetworkStats } from '@/types/mining';
@@ -31,8 +32,7 @@ export const useMining = (user: TelegramUser | null) => {
     totalHashrate: 0,
     activeMiners: 1,
     currentDifficulty: INITIAL_DIFFICULTY,
-    targetBlockTime: TARGET_BLOCK_TIME,
-    averageBlockTime: TARGET_BLOCK_TIME
+    targetBlockTime: TARGET_BLOCK_TIME
   });
 
   const [blocks, setBlocks] = useState<Block[]>([]);
@@ -160,21 +160,26 @@ export const useMining = (user: TelegramUser | null) => {
           ? getNextBlockNumber(lastBlockRef.current.number)
           : INITIAL_BLOCK;
 
+        // Создаем блок с правильной структурой типов
+        const mainReward = BASE_REWARD * MAIN_REWARD_SHARE;
         const newBlock: Block = {
+          id: crypto.randomUUID(),
           number: blockNum,
           hash,
           previousHash: lastBlockRef.current?.hash || '0'.repeat(64),
-          time: new Date().toLocaleTimeString(),
           timestamp: now,
           difficulty: networkStats.currentDifficulty,
+          minerProfileId: user?.id.toString() || 'anonymous',
+          totalShares: stats.shares,
+          reward: BASE_REWARD,
           miner: {
             username: user?.username || 'anonymous',
-            reward: BASE_REWARD * MAIN_REWARD_SHARE
+            reward: mainReward
           },
+          time: new Date().toLocaleTimeString(),
           shares: { [user?.id.toString() || 'anonymous']: stats.shares },
-          totalShares: stats.shares,
           rewards: {
-            main: BASE_REWARD * MAIN_REWARD_SHARE,
+            main: mainReward,
             shares: BASE_REWARD * (1 - MAIN_REWARD_SHARE)
           }
         };
@@ -184,13 +189,13 @@ export const useMining = (user: TelegramUser | null) => {
 
         setStats(prev => ({
           ...prev,
-          balance: prev.balance + newBlock.miner.reward,
+          balance: prev.balance + (newBlock.miner.reward || 0),
           shares: 0
         }));
 
         toast({
           title: "Блок найден!",
-          description: `Награда: ${newBlock.miner.reward.toFixed(8)}`,
+          description: `Награда: ${(newBlock.miner.reward || 0).toFixed(8)}`,
           variant: "default",
         });
 

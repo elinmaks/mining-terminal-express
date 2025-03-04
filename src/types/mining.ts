@@ -24,6 +24,13 @@ export interface Block {
   reward: number;
   miner: {
     username: string;
+    reward?: number;  // Добавляем опциональное свойство reward
+  };
+  time?: string;      // Добавляем опциональное свойство time
+  shares?: Record<string, number>; // Добавляем опциональное свойство shares
+  rewards?: {         // Добавляем опциональное свойство rewards
+    main: number;
+    shares: number;
   };
 }
 
@@ -46,6 +53,7 @@ export interface NetworkStats {
   activeMiners: number;
   currentDifficulty: number;
   targetBlockTime: number;
+  averageBlockTime?: number; // Добавляем опциональное свойство averageBlockTime
 }
 
 export interface MinerStats {
