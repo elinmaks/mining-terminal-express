@@ -112,7 +112,10 @@ export const useMiningStats = (userId?: string): UseMiningStatsReturn => {
           // Обновляем существующую запись
           const { error: updateError } = await supabase
             .from('balances')
-            .update({ amount: newBalance, updated_at: new Date() })
+            .update({ 
+              amount: newBalance, 
+              updated_at: new Date().toISOString() 
+            })
             .eq('user_id', userId);
           
           if (updateError) {

@@ -132,7 +132,7 @@ export const useBlocks = (currentDifficulty: number): UseBlocksReturn => {
           .from('balances')
           .update({ 
             amount: Number(existingBalance.amount) + reward,
-            updated_at: new Date()
+            updated_at: new Date().toISOString()
           })
           .eq('user_id', userId);
           
@@ -161,7 +161,7 @@ export const useBlocks = (currentDifficulty: number): UseBlocksReturn => {
         console.error('Error checking mining stats:', statsError);
       }
       
-      const currentTime = new Date();
+      const currentTimeStr = new Date().toISOString();
       
       if (existingStats) {
         // Обновляем существующую статистику
@@ -172,8 +172,8 @@ export const useBlocks = (currentDifficulty: number): UseBlocksReturn => {
             total_shares: existingStats.total_shares + block.totalShares,
             best_hashrate: Math.max(existingStats.best_hashrate, block.miner.hashrate || 0),
             total_reward: Number(existingStats.total_reward) + reward,
-            last_share_at: currentTime,
-            updated_at: currentTime
+            last_share_at: currentTimeStr,
+            updated_at: currentTimeStr
           })
           .eq('user_id', userId);
           
@@ -189,7 +189,7 @@ export const useBlocks = (currentDifficulty: number): UseBlocksReturn => {
             total_shares: block.totalShares,
             best_hashrate: block.miner.hashrate || 0,
             total_reward: reward,
-            last_share_at: currentTime
+            last_share_at: currentTimeStr
           });
           
         if (insertStatsError) throw insertStatsError;
