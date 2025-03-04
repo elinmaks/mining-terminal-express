@@ -9,7 +9,102 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      balances: {
+        Row: {
+          amount: number
+          updated_at: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          amount?: number
+          updated_at?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          amount?: number
+          updated_at?: string | null
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      blocks: {
+        Row: {
+          created_at: string | null
+          difficulty: number
+          hash: string
+          id: string
+          miner_id: string
+          miner_username: string
+          number: string
+          previous_hash: string
+          reward: number
+          timestamp: number
+          total_shares: number
+        }
+        Insert: {
+          created_at?: string | null
+          difficulty: number
+          hash: string
+          id?: string
+          miner_id: string
+          miner_username: string
+          number: string
+          previous_hash: string
+          reward: number
+          timestamp: number
+          total_shares: number
+        }
+        Update: {
+          created_at?: string | null
+          difficulty?: number
+          hash?: string
+          id?: string
+          miner_id?: string
+          miner_username?: string
+          number?: string
+          previous_hash?: string
+          reward?: number
+          timestamp?: number
+          total_shares?: number
+        }
+        Relationships: []
+      }
+      mining_stats: {
+        Row: {
+          best_hashrate: number
+          last_share_at: string | null
+          total_blocks_mined: number
+          total_reward: number
+          total_shares: number
+          updated_at: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          best_hashrate?: number
+          last_share_at?: string | null
+          total_blocks_mined?: number
+          total_reward?: number
+          total_shares?: number
+          updated_at?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          best_hashrate?: number
+          last_share_at?: string | null
+          total_blocks_mined?: number
+          total_reward?: number
+          total_shares?: number
+          updated_at?: string | null
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

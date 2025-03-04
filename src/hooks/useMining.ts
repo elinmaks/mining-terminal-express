@@ -12,7 +12,9 @@ export const useMining = (user: TelegramUser | null) => {
   const [activeMiners, setActiveMiners] = useState<Set<string>>(new Set());
   
   // Инициализируем подхуки
-  const { stats, incrementShares, incrementAttempts, updateHashrate, addReward, resetShares } = useMiningStats();
+  const { stats, incrementShares, incrementAttempts, updateHashrate, addReward, resetShares, fetchUserBalance } = useMiningStats(
+    user?.id?.toString()
+  );
   
   const { networkStats, updateDifficulty } = useNetworkStats({
     activeMiners,
@@ -52,6 +54,13 @@ export const useMining = (user: TelegramUser | null) => {
       resetShares();
     }
   });
+
+  // Обновляем баланс пользователя при его изменении
+  useEffect(() => {
+    if (user?.id) {
+      fetchUserBalance(user.id.toString());
+    }
+  }, [user, fetchUserBalance]);
 
   const handleBlockCreated = useCallback((block: Block) => {
     if (block.miner.username) {
