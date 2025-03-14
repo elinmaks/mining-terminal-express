@@ -1,6 +1,14 @@
 
 import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { fetchUserBalance, updateUserBalance } from '@/services/balanceService';
+import { 
+  incrementShares, 
+  incrementAttempts, 
+  updateHashrate, 
+  addReward, 
+  resetShares, 
+  updateBalance 
+} from '@/utils/miningStatsUtils';
 
 export interface MiningStatsState {
   balance: number;
@@ -29,121 +37,58 @@ export const useMiningStats = (userId?: string): UseMiningStatsReturn => {
   });
 
   // Загружаем баланс пользователя при инициализации и при изменении userId
-  const fetchUserBalance = useCallback(async (userId: string) => {
+  const fetchUserBalanceAndUpdate = useCallback(async (userId: string) => {
     if (!userId) return;
     
-    try {
-      const { data, error } = await supabase
-        .from('balances')
-        .select('amount')
-        .eq('user_id', userId)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') { // PGRST116 - запись не найдена
-        console.error('Error fetching user balance:', error);
-        return;
-      }
-      
-      if (data) {
-        setStats(prev => ({
-          ...prev,
-          balance: Number(data.amount)
-        }));
-      }
-    } catch (error) {
-      console.error('Error in fetchUserBalance:', error);
+    const balance = await fetchUserBalance(userId);
+    if (balance !== null) {
+      setStats(prev => updateBalance(prev, balance));
     }
   }, []);
 
   // Загружаем баланс при монтировании компонента, если есть userId
   useEffect(() => {
     if (userId) {
-      fetchUserBalance(userId);
+      fetchUserBalanceAndUpdate(userId);
     }
-  }, [userId, fetchUserBalance]);
+  }, [userId, fetchUserBalanceAndUpdate]);
 
-  const incrementShares = () => {
-    setStats(prev => ({
-      ...prev,
-      shares: prev.shares + 1
-    }));
-  };
+  const handleIncrementShares = useCallback(() => {
+    setStats(prev => incrementShares(prev));
+  }, []);
 
-  const incrementAttempts = (count: number) => {
-    setStats(prev => ({
-      ...prev,
-      attempts: prev.attempts + count
-    }));
-  };
+  const handleIncrementAttempts = useCallback((count: number) => {
+    setStats(prev => incrementAttempts(prev, count));
+  }, []);
 
-  const updateHashrate = (hashrate: number) => {
-    setStats(prev => ({
-      ...prev,
-      hashrate
-    }));
-  };
+  const handleUpdateHashrate = useCallback((hashrate: number) => {
+    setStats(prev => updateHashrate(prev, hashrate));
+  }, []);
 
-  const addReward = useCallback(async (reward: number) => {
-    setStats(prev => ({
-      ...prev,
-      balance: prev.balance + reward
-    }));
+  const handleAddReward = useCallback(async (reward: number) => {
+    setStats(prev => addReward(prev, reward));
     
     // Синхронизируем обновление баланса с базой данных, если есть userId
     if (userId) {
-      try {
-        // Получаем текущий баланс
-        const { data, error } = await supabase
-          .from('balances')
-          .select('amount')
-          .eq('user_id', userId)
-          .single();
-        
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error fetching balance for update:', error);
-          return;
-        }
-        
-        const currentBalance = data ? Number(data.amount) : 0;
-        const newBalance = currentBalance + reward;
-        
-        // Обновляем баланс в базе данных
-        if (data) {
-          // Обновляем существующую запись
-          const { error: updateError } = await supabase
-            .from('balances')
-            .update({ 
-              amount: newBalance, 
-              updated_at: new Date().toISOString() 
-            })
-            .eq('user_id', userId);
-          
-          if (updateError) {
-            console.error('Error updating balance:', updateError);
-          }
-        }
-        // Если записи нет, она будет создана при сохранении блока
-      } catch (error) {
-        console.error('Error in addReward:', error);
+      const newBalance = await updateUserBalance(userId, 'anonymous', reward);
+      if (newBalance !== null) {
+        setStats(prev => updateBalance(prev, newBalance));
       }
     }
   }, [userId]);
 
-  const resetShares = () => {
-    setStats(prev => ({
-      ...prev,
-      shares: 0
-    }));
-  };
+  const handleResetShares = useCallback(() => {
+    setStats(prev => resetShares(prev));
+  }, []);
 
   return {
     stats,
     setStats,
-    incrementShares,
-    incrementAttempts,
-    updateHashrate,
-    addReward,
-    resetShares,
-    fetchUserBalance
+    incrementShares: handleIncrementShares,
+    incrementAttempts: handleIncrementAttempts,
+    updateHashrate: handleUpdateHashrate,
+    addReward: handleAddReward,
+    resetShares: handleResetShares,
+    fetchUserBalance: fetchUserBalanceAndUpdate
   };
 };
