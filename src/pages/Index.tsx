@@ -8,6 +8,7 @@ import { getTelegramUser, initTelegramWebApp, showMainButton, setMainButtonHandl
 import type { TelegramUser } from '@/types/mining';
 import { useMining } from '@/hooks/useMining';
 import { enableBlocksRealtime } from '@/services/blockService';
+import { INITIAL_BLOCK } from '@/constants/mining';
 
 const Index = () => {
   const [user, setUser] = useState<TelegramUser | null>(null);

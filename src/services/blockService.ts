@@ -169,7 +169,7 @@ export const enableBlocksRealtime = async (): Promise<void> => {
       url: '/rest/v1/rpc/realtime_subscription_check',
       headers: { 'Content-Type': 'application/json' },
       body: { table: 'blocks' }
-    });
+    } as any); // Используем as any для обхода проблемы с типами
     
     if (error) {
       console.error('Ошибка при проверке настроек Realtime:', error);
