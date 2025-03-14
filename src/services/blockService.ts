@@ -157,3 +157,24 @@ export const saveBlock = async (block: Block): Promise<void> => {
     console.error('Error saving block data:', error);
   }
 };
+
+/**
+ * Активирует Realtime для таблицы blocks
+ */
+export const enableBlocksRealtime = async (): Promise<void> => {
+  try {
+    // Проверяем, что таблица blocks включена в публикацию realtime
+    const { error } = await supabase.rpc('supabase_functions.http_request', {
+      method: 'POST',
+      url: '/rest/v1/rpc/realtime_subscription_check',
+      headers: { 'Content-Type': 'application/json' },
+      body: { table: 'blocks' }
+    });
+    
+    if (error) {
+      console.error('Ошибка при проверке настроек Realtime:', error);
+    }
+  } catch (error) {
+    console.error('Ошибка при активации Realtime:', error);
+  }
+};

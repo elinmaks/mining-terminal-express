@@ -14,7 +14,7 @@ export interface BlockReward {
 
 export interface Block {
   id: string;
-  number: string;
+  number: string;  // Формат: 0000001 to 9999999
   hash: string;
   previousHash: string;
   timestamp: number;
@@ -25,7 +25,7 @@ export interface Block {
   miner: {
     username: string;
     reward?: number;
-    hashrate?: number;  // Добавляем опциональное свойство hashrate
+    hashrate?: number;
   };
   time?: string;
   shares?: Record<string, number>;

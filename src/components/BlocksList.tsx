@@ -1,5 +1,5 @@
 
-import { memo, useState } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { haptic } from '@/utils/telegram';
 import type { Block } from '@/types/mining';
@@ -12,6 +12,24 @@ const BlocksList = memo(({
   blocks
 }: BlocksListProps) => {
   const [selectedBlock, setSelectedBlock] = useState<Block | null>(null);
+  const [lastAddedBlockId, setLastAddedBlockId] = useState<string | null>(null);
+
+  // Эффект для анимации нового блока
+  useEffect(() => {
+    if (blocks.length > 0) {
+      const latestBlock = blocks[0];
+      if (latestBlock.id !== lastAddedBlockId) {
+        setLastAddedBlockId(latestBlock.id);
+        
+        // Через 3 секунды убираем подсветку
+        const timer = setTimeout(() => {
+          setLastAddedBlockId(null);
+        }, 3000);
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [blocks]);
 
   const handleBlockClick = (block: Block) => {
     haptic.impact('medium');
@@ -24,7 +42,9 @@ const BlocksList = memo(({
         {blocks.map((block) => (
           <div 
             key={block.id} 
-            className="text-terminal-text mb-1 cursor-pointer hover:bg-white/5 p-2 rounded transition-colors" 
+            className={`text-terminal-text mb-1 cursor-pointer hover:bg-white/5 p-2 rounded transition-colors ${
+              block.id === lastAddedBlockId ? 'bg-white/10 animate-pulse' : ''
+            }`}
             onClick={() => handleBlockClick(block)}
           >
             <span className="text-terminal-nonce">#{block.number}</span>{' '}

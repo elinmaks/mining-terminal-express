@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Grid, Database, ListTodo, ArrowUp } from 'lucide-react';
 import MiningStats from '@/components/MiningStats';
@@ -6,9 +7,12 @@ import BlocksList from '@/components/BlocksList';
 import { getTelegramUser, initTelegramWebApp, showMainButton, setMainButtonHandler, haptic } from '@/utils/telegram';
 import type { TelegramUser } from '@/types/mining';
 import { useMining } from '@/hooks/useMining';
+import { enableBlocksRealtime } from '@/services/blockService';
+
 const Index = () => {
   const [user, setUser] = useState<TelegramUser | null>(null);
   const [activeSection, setActiveSection] = useState('mining');
+  
   const {
     isMining,
     setIsMining,
@@ -20,6 +24,7 @@ const Index = () => {
     blocks,
     activeMiners
   } = useMining(user);
+
   useEffect(() => {
     initTelegramWebApp();
     const telegramUser = getTelegramUser();
@@ -29,10 +34,15 @@ const Index = () => {
         username: telegramUser.username
       });
     }
+    
     document.body.style.overscrollBehavior = 'none';
     document.body.style.height = '100vh';
     document.body.style.overflow = 'hidden';
+    
+    // Активируем Realtime для таблицы blocks
+    enableBlocksRealtime();
   }, []);
+
   useEffect(() => {
     const buttonText = isMining ? 'STOP MINING' : 'START MINING';
     showMainButton(buttonText);
@@ -41,14 +51,19 @@ const Index = () => {
       setIsMining(!isMining);
     });
   }, [isMining, setIsMining]);
+
   const handleStartMining = () => {
     haptic.impact('medium');
     setIsMining(true);
   };
+
   const handleSectionClick = (section: string) => {
     haptic.selection();
     setActiveSection(section);
   };
+
+  const currentBlockNumber = blocks.length > 0 ? blocks[0].number : INITIAL_BLOCK;
+
   return <div className="flex flex-col h-screen bg-background">
       {/* Панель навигации */}
       <div className="fixed top-0 left-0 right-0 z-20 bg-background/80 backdrop-blur-lg border-b border-white/10">
@@ -77,25 +92,45 @@ const Index = () => {
       {/* Основной контент */}
       <div className="flex-1 overflow-y-auto pt-[72px] scroll-heavy">
         <div className="max-w-4xl mx-auto p-4">
-          <MiningStats personalStats={{
-          balance: stats.balance,
-          hashrate: stats.hashrate,
-          shares: stats.shares,
-          attempts: stats.attempts
-        }} networkStats={{
-          totalHashrate: stats.hashrate * activeMiners.size,
-          activeMiners: activeMiners.size,
-          difficulty: networkStats.currentDifficulty,
-          currentBlock: parseInt(blocks[0]?.number || '1000000', 16)
-        }} user={user} />
+          <MiningStats 
+            personalStats={{
+              balance: stats.balance,
+              hashrate: stats.hashrate,
+              shares: stats.shares,
+              attempts: stats.attempts
+            }} 
+            networkStats={{
+              totalHashrate: stats.hashrate * activeMiners.size,
+              activeMiners: activeMiners.size,
+              difficulty: networkStats.currentDifficulty,
+              currentBlock: currentBlockNumber
+            }} 
+            user={user} 
+          />
 
-          <MiningOutput nonce={currentNonce} hash={currentHash} hashrate={currentHashrate.toFixed(2)} />
+          <MiningOutput 
+            nonce={currentNonce} 
+            hash={currentHash} 
+            hashrate={currentHashrate.toFixed(2)} 
+          />
 
-          {!isMining}
+          {!isMining && blocks.length === 0 && (
+            <div className="glass-panel p-6 rounded-lg text-center mb-4">
+              <h3 className="text-lg mb-2">Майнинг не запущен</h3>
+              <p className="text-sm text-gray-400 mb-4">Нажмите кнопку "START MINING" чтобы начать майнинг</p>
+              <button 
+                onClick={handleStartMining}
+                className="bg-terminal-hash text-black font-semibold py-2 px-6 rounded hover:bg-opacity-90 transition-colors"
+              >
+                Начать майнинг
+              </button>
+            </div>
+          )}
 
           <BlocksList blocks={blocks} />
         </div>
       </div>
     </div>;
 };
+
 export default Index;
