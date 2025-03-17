@@ -1,24 +1,20 @@
-
 import { memo, useState } from 'react';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { haptic } from '@/utils/telegram';
 import { formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
-
 interface Stats {
   balance: number;
   hashrate: number;
   shares: number;
   attempts: number;
 }
-
 interface NetworkStats {
   totalHashrate: number;
   activeMiners: number;
   difficulty: number;
   currentBlock: string;
 }
-
 interface MiningStatsProps {
   personalStats: Stats;
   networkStats: NetworkStats;
@@ -28,19 +24,16 @@ interface MiningStatsProps {
     registered_at?: string;
   } | null;
 }
-
 const MiningStats = memo(({
   personalStats,
   networkStats,
   user
 }: MiningStatsProps) => {
   const [showUserInfo, setShowUserInfo] = useState(false);
-
   const handleUserClick = () => {
     haptic.impact('light');
     setShowUserInfo(true);
   };
-
   return <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div className="glass-panel p-4 rounded-lg bg-zinc-950">
@@ -61,7 +54,7 @@ const MiningStats = memo(({
             <div className="mb-2">Network Stats:</div>
             <div className="font-normal text-zinc-400">Total Hashrate: <span className="text-terminal-hash">{networkStats.totalHashrate.toFixed(2)}</span> MH/s</div>
             <div>Active Miners: <span className="text-terminal-nonce">{networkStats.activeMiners}</span></div>
-            <div>Difficulty: <span className="text-terminal-rate">{networkStats.difficulty}</span></div>
+            <div className="2">Difficulty: <span className="text-terminal-rate">{networkStats.difficulty}</span></div>
             <div>Current Block: <span className="text-terminal-text">#{networkStats.currentBlock}</span></div>
           </div>
         </div>
@@ -91,6 +84,5 @@ const MiningStats = memo(({
       </Dialog>
     </>;
 });
-
 MiningStats.displayName = 'MiningStats';
 export default MiningStats;
