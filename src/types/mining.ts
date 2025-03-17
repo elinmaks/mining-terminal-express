@@ -18,7 +18,7 @@ export interface Block {
   hash: string;
   previousHash: string;
   timestamp: number;
-  difficulty: number;
+  difficulty: 2;
   minerProfileId: string;
   totalShares: number;
   reward: number;
@@ -52,7 +52,7 @@ export interface TelegramUser {
 export interface NetworkStats {
   totalHashrate: number;
   activeMiners: number;
-  currentDifficulty: number;
+  currentDifficulty: 2;
   targetBlockTime: number;
   averageBlockTime?: number;
 }
